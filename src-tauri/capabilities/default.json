@@ -6,6 +6,8 @@
   "permissions": [
     "core:default",
     "store:default",
+    "updater:default",
+    "process:allow-restart",
     "mcp-client:allow-health-check",
     "mcp-client:allow-get-connection-statuses",
     "mcp-client:allow-plugin-connect-server",
