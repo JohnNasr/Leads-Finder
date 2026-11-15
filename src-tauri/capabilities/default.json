@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default capability for the main window",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "store:default",
+    "mcp-client:allow-health-check",
+    "mcp-client:allow-get-connection-statuses",
+    "mcp-client:allow-plugin-connect-server",
+    "mcp-client:allow-plugin-disconnect-server",
+    "mcp-client:allow-plugin-list-tools",
+    "mcp-client:allow-plugin-execute-tool"
+  ]
+}
