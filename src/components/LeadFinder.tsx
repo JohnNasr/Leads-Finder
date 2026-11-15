@@ -30,6 +30,7 @@ const COUNTRIES: { code: string; label: string }[] = [
 ];
 
 const LANGUAGES: { code: string; label: string }[] = [
+  { code: '', label: 'All languages' },
   { code: 'en', label: 'English' },
   { code: 'de', label: 'German' },
   { code: 'fr', label: 'French' },
@@ -62,6 +63,7 @@ function buildSearchInput(opts: SearchOptions): Item {
   };
   // Worldwide means no country filter at all
   if (opts.countryCode) input.countryCode = opts.countryCode;
+  if (!opts.languageCode) delete input.languageCode;
   return input;
 }
 
@@ -203,7 +205,7 @@ export function LeadFinder({ selectedActor, onResults, onProgress }: LeadFinderP
   const { executeTool, isConnecting } = useMCP();
   const [tags, setTags] = useState<string[]>([]);
   const [countryCode, setCountryCode] = useState('');
-  const [languageCode, setLanguageCode] = useState('en');
+  const [languageCode, setLanguageCode] = useState('');
   const [maxResults, setMaxResults] = useState(DEFAULT_RESULTS);
   const [pages, setPages] = useState(1);
   const [isSearching, setIsSearching] = useState(false);
