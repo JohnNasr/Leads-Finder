@@ -102,7 +102,7 @@ function App() {
                 </svg>
               </div>
               <div className="leading-tight">
-                <h1 className="text-base font-bold tracking-tight text-gradient">Inomics Leads</h1>
+                <h1 className="text-base font-bold tracking-tight text-gradient">Business Lead Finder</h1>
                 <p className="text-xs text-slate-500">Lead discovery via Apify</p>
               </div>
             </div>

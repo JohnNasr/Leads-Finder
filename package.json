@@ -1,7 +1,7 @@
 {
-  "name": "inomics-leads",
+  "name": "business-lead-finder",
   "version": "0.1.0",
-  "description": "Inomics Lead Finding Desktop App with Apify MCP Integration",
+  "description": "Business Lead Finder desktop app with Apify MCP Integration",
   "type": "module",
   "scripts": {
     "dev": "vite",
