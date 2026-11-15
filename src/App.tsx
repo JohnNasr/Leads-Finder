@@ -4,6 +4,7 @@ import { ActorSelector } from './components/ActorSelector';
 import { LeadFinder } from './components/LeadFinder';
 import { ResultsTable } from './components/ResultsTable';
 import { Settings } from './components/Settings';
+import { UpdateBanner } from './components/UpdateBanner';
 import type { Actor, Lead } from './types';
 import { normalizeSearchResults } from './services/leads';
 import { buildExport, EXPORT_OPTIONS, type ExportFormat } from './services/exporters';
@@ -101,7 +102,7 @@ function App() {
                 </svg>
               </div>
               <div className="leading-tight">
-                <h1 className="text-base font-bold tracking-tight text-gradient">Inomics Leads</h1>
+                <h1 className="text-base font-bold tracking-tight text-gradient">Business Lead Finder</h1>
                 <p className="text-xs text-slate-500">Lead discovery via Apify</p>
               </div>
             </div>
@@ -137,6 +138,7 @@ function App() {
           )}
         </div>
       </header>
+      <UpdateBanner />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <div className={`grid grid-cols-1 gap-6 ${hasAside ? 'lg:grid-cols-4' : ''}`}>
