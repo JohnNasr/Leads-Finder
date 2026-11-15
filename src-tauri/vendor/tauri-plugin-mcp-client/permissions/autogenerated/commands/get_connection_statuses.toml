@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-get-connection-statuses"
+description = "Enables the get_connection_statuses command without any pre-configured scope."
+commands.allow = ["get_connection_statuses"]
+
+[[permission]]
+identifier = "deny-get-connection-statuses"
+description = "Denies the get_connection_statuses command without any pre-configured scope."
+commands.deny = ["get_connection_statuses"]

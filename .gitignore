@@ -5,3 +5,15 @@ dist/
 build/
 .env
 .env.local
+
+# Build output and local tooling
+src-tauri/target/
+src-tauri/gen/
+release/
+.gg/
+*.tsbuildinfo
+*.png.bak
+
+# Local tool config and generated reports, including inside vendored crates
+.claude/
+**/tarpaulin-report.html

@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-plugin-execute-tool"
+description = "Enables the plugin_execute_tool command without any pre-configured scope."
+commands.allow = ["plugin_execute_tool"]
+
+[[permission]]
+identifier = "deny-plugin-execute-tool"
+description = "Denies the plugin_execute_tool command without any pre-configured scope."
+commands.deny = ["plugin_execute_tool"]

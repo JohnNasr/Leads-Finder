@@ -1,0 +1,24 @@
+[package]
+name = "inomics-leads"
+version = "0.1.0"
+description = "Inomics Lead Finding Desktop App with Apify MCP Integration"
+authors = ["Inomics"]
+edition = "2021"
+
+[lib]
+name = "inomics_leads_lib"
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tauri = { version = "2", features = [] }
+tauri-plugin-store = { version = "2" }
+tauri-plugin-mcp-client = { git = "https://github.com/sublayerapp/tauri-plugin-mcp-client" }
+
+# Vendored copy built as rlib only: the upstream cdylib exports overflow GNU ld on Windows.
+[patch."https://github.com/sublayerapp/tauri-plugin-mcp-client"]
+tauri-plugin-mcp-client = { path = "vendor/tauri-plugin-mcp-client" }
