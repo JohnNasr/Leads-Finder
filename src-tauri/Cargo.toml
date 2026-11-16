@@ -1,12 +1,11 @@
 [package]
-name = "inomics-leads"
+name = "business-lead-finder"
 version = "0.1.1"
-description = "Inomics Lead Finding Desktop App with Apify MCP Integration"
-authors = ["Inomics"]
+description = "Business Lead Finder desktop app with Apify MCP integration"
 edition = "2021"
 
 [lib]
-name = "inomics_leads_lib"
+name = "business_lead_finder_lib"
 crate-type = ["rlib"]
 
 [build-dependencies]

@@ -10,6 +10,7 @@ import type { Actor, Lead, SearchOptions } from './types';
 import { normalizeSearchResults, SEARCH_ACTOR } from './services/leads';
 import { fetchAllItems, readRun, waitForRun } from './services/runs';
 import { buildExport, EXPORT_OPTIONS, type ExportFormat } from './services/exporters';
+import logoUrl from './assets/logo.png';
 
 type Tab = 'actors' | 'search' | 'results' | 'settings';
 
@@ -166,11 +167,7 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-6">
             <div className="flex items-center gap-3 py-4">
-              <div className="brand-mark w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center shadow-sm">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0c2.5-2.2 3.75-5.2 3.75-9S14.5 5.2 12 3m0 18c-2.5-2.2-3.75-5.2-3.75-9S9.5 5.2 12 3m-8.5 9h17" />
-                </svg>
-              </div>
+              <img src={logoUrl} alt="" aria-hidden="true" className="brand-logo w-10 h-10 rounded-xl shrink-0" />
               <div className="leading-tight">
                 <h1 className="text-base font-bold tracking-tight text-gradient">Business Lead Finder</h1>
                 <p className="text-xs text-slate-500">Lead discovery via Apify</p>
