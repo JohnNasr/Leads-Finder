@@ -89,7 +89,7 @@ function toNotepad(leads: Lead[]): string {
   };
 
   const header = [
-    'INOMICS LEADS',
+    'BUSINESS LEAD FINDER',
     `Exported ${new Date().toLocaleString()}  |  ${leads.length} leads`,
     rule,
   ];
@@ -129,13 +129,13 @@ function toDocsHtml(leads: Lead[]): string {
     const description = lead.description ? `<p>${escapeHtml(lead.description)}</p>` : '';
     return `<h2>${escapeHtml(lead.name)}</h2><table border="1" cellpadding="4" cellspacing="0">${table}</table>${description}`;
   });
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Inomics Leads</title></head><body><h1>Inomics Leads</h1><p>${leads.length} leads, exported ${escapeHtml(new Date().toLocaleDateString())}</p>${sections.join('')}</body></html>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Business Lead Finder</title></head><body><h1>Business Lead Finder</h1><p>${leads.length} leads, exported ${escapeHtml(new Date().toLocaleDateString())}</p>${sections.join('')}</body></html>`;
 }
 
 const stamp = () => new Date().toISOString().slice(0, 10);
 
 export function buildExport(leads: Lead[], format: ExportFormat): ExportFile {
-  const base = `inomics-leads-${stamp()}`;
+  const base = `business-lead-finder-${stamp()}`;
   switch (format) {
     case 'csv':
       return { content: `\uFEFF${toCsv(leads)}`, filename: `${base}.csv`, type: 'text/csv;charset=utf-8' };
@@ -146,13 +146,13 @@ export function buildExport(leads: Lead[], format: ExportFormat): ExportFile {
       return { content: `\uFEFF${toCsv(leads)}`, filename: `${base}-sheets.csv`, type: 'text/csv;charset=utf-8' };
     case 'excel':
       return {
-        content: toHtmlTable(leads, 'Inomics Leads'),
+        content: toHtmlTable(leads, 'Business Lead Finder'),
         filename: `${base}.xls`,
         type: 'application/vnd.ms-excel',
       };
     case 'word':
       return {
-        content: toHtmlTable(leads, 'Inomics Leads'),
+        content: toHtmlTable(leads, 'Business Lead Finder'),
         filename: `${base}.doc`,
         type: 'application/msword',
       };

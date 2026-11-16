@@ -379,3 +379,17 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+.brand-logo {
+  animation: brand-breathe 5s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.35));
+}
+
+@keyframes brand-breathe {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.35)); }
+  50% { transform: scale(1.05); filter: drop-shadow(0 0 10px rgba(124, 58, 237, 0.6)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo { animation: none; }
+}
