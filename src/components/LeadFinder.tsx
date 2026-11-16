@@ -3,7 +3,7 @@ import { useMCP } from '../hooks/useMCP';
 import { errorMessage } from '../services/mcp';
 import { normalizeSearchResults, SEARCH_ACTOR } from '../services/leads';
 import { fetchAllItems, readRun, waitForRun } from '../services/runs';
-import type { Actor, Lead } from '../types';
+import type { Actor, Lead, SearchOptions } from '../types';
 
 type Item = Record<string, unknown>;
 
@@ -45,13 +45,14 @@ const RESULT_CHOICES = [25, 50, 100, 200];
 const PAGE_CHOICES = [1, 2, 3];
 const DEFAULT_RESULTS = 50;
 
-export interface SearchOptions {
-  queries: string[];
-  countryCode: string;
-  languageCode: string;
-  maxPagesPerQuery: number;
-  resultsPerPage: number;
-}
+export const RECENCY_OPTIONS = [
+  { value: '', label: 'Any time' },
+  { value: 'qdr:h', label: 'Past hour' },
+  { value: 'qdr:d', label: 'Past 24 hours' },
+  { value: 'qdr:w', label: 'Past week' },
+  { value: 'qdr:m', label: 'Past month' },
+  { value: 'qdr:y', label: 'Past year' },
+];
 
 function buildSearchInput(opts: SearchOptions): Item {
   const input: Item = {
@@ -64,6 +65,7 @@ function buildSearchInput(opts: SearchOptions): Item {
   // Worldwide means no country filter at all
   if (opts.countryCode) input.countryCode = opts.countryCode;
   if (!opts.languageCode) delete input.languageCode;
+  if (opts.recency) input.tbs = opts.recency;
   return input;
 }
 
@@ -208,6 +210,7 @@ export function LeadFinder({ selectedActor, onResults, onProgress }: LeadFinderP
   const [languageCode, setLanguageCode] = useState('');
   const [maxResults, setMaxResults] = useState(DEFAULT_RESULTS);
   const [pages, setPages] = useState(1);
+  const [recency, setRecency] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -225,6 +228,7 @@ export function LeadFinder({ selectedActor, onResults, onProgress }: LeadFinderP
         languageCode,
         maxPagesPerQuery: pages,
         resultsPerPage: maxResults,
+        recency,
       });
       onProgress({ current: 1, total: 3, status: 'Starting Apify run...' });
 
@@ -311,6 +315,21 @@ export function LeadFinder({ selectedActor, onResults, onProgress }: LeadFinderP
                 ))}
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="label" htmlFor="recency">Results from</label>
+            <select
+              id="recency"
+              className="input"
+              value={recency}
+              onChange={(e) => setRecency(e.target.value)}
+              disabled={isSearching}
+            >
+              {RECENCY_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex flex-wrap gap-6">

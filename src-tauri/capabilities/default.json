@@ -13,6 +13,8 @@
     "mcp-client:allow-plugin-connect-server",
     "mcp-client:allow-plugin-disconnect-server",
     "mcp-client:allow-plugin-list-tools",
-    "mcp-client:allow-plugin-execute-tool"
+    "mcp-client:allow-plugin-execute-tool",
+    "dialog:default",
+    "notification:default"
   ]
 }

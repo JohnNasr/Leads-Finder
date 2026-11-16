@@ -1,6 +1,6 @@
 {
   "name": "business-lead-finder",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Business Lead Finder desktop app with Apify MCP Integration",
   "type": "module",
   "scripts": {
@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-process": "2.4.0",
     "@tauri-apps/plugin-store": "^2.0.0",
