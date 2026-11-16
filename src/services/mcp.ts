@@ -41,7 +41,11 @@ class MCPServiceImpl implements MCPService {
     // The plugin spawns the server with the app's environment, so the token is set there first
     await invoke<void>('set_apify_env', { token });
     await invoke<string>('plugin:mcp-client|plugin_connect_server', {
-      request: { server_id: 'apify', command: NPX, args: ['-y', '@apify/actors-mcp-server'] },
+      request: {
+        server_id: 'apify',
+        command: NPX,
+        args: ['-y', '@apify/actors-mcp-server', '--tools', 'actors,docs,api,runs,storage,tasks,schedules'],
+      },
     });
   }
 
