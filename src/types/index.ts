@@ -108,12 +108,49 @@ export interface Lead {
   description?: string;
   source_actor: string;
   raw_data?: Record<string, unknown>;
+  // Enrichment fields
+  linkedin?: string;
+  twitter?: string;
+  facebook?: string;
+  enrichment_status?: 'pending' | 'completed' | 'failed';
+  enrichment_date?: string;
+  // AI outreach
+  outreach_draft?: OutreachDraft;
+  // ICP fit scoring
+  fit_score?: FitScore;
+  // Email waterfall
+  email_source?: string;
+  email_verified?: boolean;
+  // Saved search tracking
+  isNew?: boolean;
+}
+
+export interface OutreachDraft {
+  icebreaker: string;
+  subject: string;
+  hook: string;
+  talking_points: string[];
+}
+
+export interface FitScore {
+  score: number;
+  reason: string;
+  tags: string[];
 }
 
 export interface SearchParams {
   query: string;
   actor_id?: string;
   max_results?: number;
+}
+
+export interface SearchOptions {
+  queries: string[];
+  countryCode: string;
+  languageCode: string;
+  maxPagesPerQuery: number;
+  resultsPerPage: number;
+  recency: string;
 }
 
 export interface ApiTokenResult {
