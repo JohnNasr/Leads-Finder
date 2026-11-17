@@ -1,5 +1,5 @@
-import { Anthropic } from '@anthropic-ai/sdk';
 import type { Lead, FitScore } from '../types';
+import { anthropicClient, DEFAULT_ANTHROPIC_MODEL, parseJsonReply, replyText } from './llm';
 
 const ICP_PROMPT = `You are an expert B2B sales analyst. Evaluate how well this lead matches the Ideal Customer Profile (ICP).
 
@@ -33,10 +33,11 @@ export async function scoreLeads(
   leads: Lead[],
   icpConfig: string,
   apiKey: string,
-  provider: 'anthropic' | 'openai' = 'anthropic'
+  provider: 'anthropic' | 'openai' = 'anthropic',
+  model = DEFAULT_ANTHROPIC_MODEL,
 ): Promise<Lead[]> {
   if (provider === 'anthropic') {
-    return scoreWithAnthropic(leads, icpConfig, apiKey);
+    return scoreWithAnthropic(leads, icpConfig, apiKey, model);
   }
   throw new Error(`Provider ${provider} not yet implemented`);
 }
@@ -44,9 +45,10 @@ export async function scoreLeads(
 async function scoreWithAnthropic(
   leads: Lead[],
   icpConfig: string,
-  apiKey: string
+  apiKey: string,
+  model: string,
 ): Promise<Lead[]> {
-  const client = new Anthropic({ apiKey });
+  const client = anthropicClient(apiKey);
   const scoredLeads = [...leads];
 
   // Process in batches of 10 to avoid token limits
@@ -69,14 +71,14 @@ async function scoreWithAnthropic(
 
       try {
         const response = await client.messages.create({
-          model: 'claude-3-5-haiku-20241022',
-          max_tokens: 512,
+          model,
+          max_tokens: 2048,
           system: 'You are a B2B sales analyst. Always return valid JSON only.',
           messages: [{ role: 'user', content: leadPrompt }],
         });
 
-        const text = response.content[0].type === 'text' ? response.content[0].text : '';
-        const fitScore = JSON.parse(text) as FitScore;
+        const text = replyText(response.content);
+        const fitScore = parseJsonReply<FitScore>(text);
         
         if (typeof fitScore.score === 'number' && fitScore.reason && Array.isArray(fitScore.tags)) {
           const leadIndex = leads.findIndex(l => l.id === lead.id);

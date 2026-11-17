@@ -287,7 +287,7 @@ function App() {
                   leads={leads}
                   onExport={handleExport}
                   onLeadsUpdate={handleLeadsUpdate}
-                  _executeTool={executeTool}
+                  executeTool={executeTool}
                 />
               </>
             )}

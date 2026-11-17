@@ -105,6 +105,8 @@ export interface Lead {
   website?: string;
   email?: string;
   phone?: string;
+  emails?: ContactEmail[];
+  phones?: string[];
   description?: string;
   source_actor: string;
   raw_data?: Record<string, unknown>;
@@ -123,6 +125,13 @@ export interface Lead {
   email_verified?: boolean;
   // Saved search tracking
   isNew?: boolean;
+}
+
+export interface ContactEmail {
+  email: string;
+  department?: 'marketing' | 'hr';
+  name?: string;
+  title?: string;
 }
 
 export interface OutreachDraft {
