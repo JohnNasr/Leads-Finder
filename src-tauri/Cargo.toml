@@ -1,5 +1,6 @@
 [package]
 name = "business-lead-finder"
+license = "MIT"
 version = "0.1.1"
 description = "Business Lead Finder desktop app with Apify MCP integration"
 edition = "2021"
