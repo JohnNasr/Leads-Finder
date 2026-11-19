@@ -1,4 +1,5 @@
 import type { Lead } from '../types';
+import { joinEmails, joinPhones } from './contacts';
 
 export type ExportFormat = 'csv' | 'json' | 'sheets' | 'word' | 'excel' | 'notepad' | 'docs';
 
@@ -8,7 +9,10 @@ export interface ExportFile {
   type: string;
 }
 
-const COLUMNS = ['Name', 'Type', 'Location', 'Website', 'Email', 'Phone', 'Description', 'Source'] as const;
+const COLUMNS = [
+  'Name', 'Type', 'Location', 'Website', 'Email', 'Phone', 'Description', 'Source',
+  'Outreach Subject', 'Outreach Icebreaker', 'Outreach Hook', 'Talking Points',
+] as const;
 
 function rowsOf(leads: Lead[]): string[][] {
   return leads.map(lead => [
@@ -16,10 +20,14 @@ function rowsOf(leads: Lead[]): string[][] {
     lead.type,
     lead.location,
     lead.website ?? '',
-    lead.email ?? '',
-    lead.phone ?? '',
+    joinEmails(lead),
+    joinPhones(lead),
     lead.description ?? '',
     lead.source_actor,
+    lead.outreach_draft?.subject ?? '',
+    lead.outreach_draft?.icebreaker ?? '',
+    lead.outreach_draft?.hook ?? '',
+    lead.outreach_draft?.talking_points?.join('; ') ?? '',
   ]);
 }
 
@@ -47,10 +55,11 @@ function toJson(leads: Lead[]): string {
     type: lead.type,
     location: lead.location,
     website: lead.website ?? '',
-    email: lead.email ?? '',
-    phone: lead.phone ?? '',
+    email: joinEmails(lead),
+    phone: joinPhones(lead),
     description: lead.description ?? '',
     source_actor: lead.source_actor,
+    outreach_draft: lead.outreach_draft ?? null,
   }));
   return JSON.stringify(data, null, 2);
 }
@@ -96,12 +105,16 @@ function toNotepad(leads: Lead[]): string {
   const blocks = leads.map((lead, i) => {
     const fields: [string, string][] = [
       ['Website', lead.website ?? ''],
-      ['Email', lead.email ?? ''],
-      ['Phone', lead.phone ?? ''],
+      ['Email', joinEmails(lead)],
+      ['Phone', joinPhones(lead)],
       ['Location', lead.location],
       ['Type', lead.type],
       ['Description', lead.description ?? ''],
       ['Source', lead.source_actor],
+      ['Subject', lead.outreach_draft?.subject ?? ''],
+      ['Icebreaker', lead.outreach_draft?.icebreaker ?? ''],
+      ['Hook', lead.outreach_draft?.hook ?? ''],
+      ['Talking points', lead.outreach_draft?.talking_points?.join('; ') ?? ''],
     ];
     const body = fields
       .filter(([, value]) => value !== '')
@@ -118,9 +131,13 @@ function toDocsHtml(leads: Lead[]): string {
       ['Type', lead.type],
       ['Location', lead.location],
       ['Website', lead.website ?? ''],
-      ['Email', lead.email ?? ''],
-      ['Phone', lead.phone ?? ''],
+      ['Email', joinEmails(lead)],
+      ['Phone', joinPhones(lead)],
       ['Source', lead.source_actor],
+      ['Subject', lead.outreach_draft?.subject ?? ''],
+      ['Icebreaker', lead.outreach_draft?.icebreaker ?? ''],
+      ['Hook', lead.outreach_draft?.hook ?? ''],
+      ['Talking points', lead.outreach_draft?.talking_points?.join('; ') ?? ''],
     ];
     const table = rows
       .filter(([, value]) => value !== '')

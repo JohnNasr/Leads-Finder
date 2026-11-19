@@ -76,3 +76,7 @@ src-tauri/      Tauri (Rust) backend and app configuration
 
 - Keep the CI pipeline in `.github/workflows/ci.yml` green.
 - Run `npm run typecheck` and `npm run lint` before committing.
+
+## License
+
+[MIT](LICENSE)

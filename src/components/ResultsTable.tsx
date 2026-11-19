@@ -5,19 +5,21 @@ import { EXPORT_OPTIONS, type ExportFormat } from '../services/exporters';
 import { enrichLeads } from '../services/enrichment';
 import { generateOutreachDraft } from '../services/outreach';
 import { scoreLeads } from '../services/icp';
+import { loadLlmModel } from '../services/llm';
+import { leadEmails, leadPhones } from '../services/contacts';
+import type { ExecuteToolResponse } from '../types';
 
 interface ResultsTableProps {
   leads: Lead[];
   onExport: (format: ExportFormat) => void;
   onLeadsUpdate: (leads: Lead[]) => void;
-  // executeTool reserved for future email waterfall feature
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _executeTool: (toolName: string, args: Record<string, unknown>) => Promise<unknown>;
+  executeTool: (toolName: string, args: Record<string, unknown>) => Promise<ExecuteToolResponse>;
 }
 
-export function ResultsTable({ leads, onExport, onLeadsUpdate, _executeTool }: ResultsTableProps) {
+export function ResultsTable({ leads, onExport, onLeadsUpdate, executeTool }: ResultsTableProps) {
   const [sortConfig, setSortConfig] = useState<{ key: keyof Lead; direction: 'asc' | 'desc' } | null>(null);
   const [filterText, setFilterText] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState<'all' | 'marketing' | 'hr'>('all');
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [visibleColumns, setVisibleColumns] = useState<Set<keyof Lead>>(new Set([
     'name', 'type', 'location', 'website', 'email', 'phone', 'fit_score', 'source_actor'
@@ -39,10 +41,17 @@ export function ResultsTable({ leads, onExport, onLeadsUpdate, _executeTool }: R
         {lead.website}
       </a>
     ) : <span className="text-slate-400">—</span> },
-    { key: 'email', label: 'Email', render: (lead) => lead.email ? (
-      <a href={`mailto:${lead.email}`} className="text-blue-600 hover:underline">{lead.email}</a>
+    { key: 'email', label: 'Email', render: (lead) => leadEmails(lead).length ? (
+      <div className="flex flex-col">
+        {leadEmails(lead).map(c => (
+          <a key={c.email} href={`mailto:${c.email}`} className="text-blue-600 hover:underline">
+            {c.email}
+            {c.department && <span className="ml-1 text-xs text-slate-500">({c.department === 'hr' ? 'HR' : 'Marketing'})</span>}
+          </a>
+        ))}
+      </div>
     ) : <span className="text-slate-400">—</span> },
-    { key: 'phone', label: 'Phone', render: (lead) => lead.phone ? <span>{lead.phone}</span> : <span className="text-slate-400">—</span> },
+    { key: 'phone', label: 'Phone', render: (lead) => leadPhones(lead).length ? <span>{leadPhones(lead).join(', ')}</span> : <span className="text-slate-400">—</span> },
     { key: 'linkedin', label: 'LinkedIn', render: (lead) => lead.linkedin ? (
       <a href={lead.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">LinkedIn</a>
     ) : <span className="text-slate-400">—</span> },
@@ -95,6 +104,9 @@ export function ResultsTable({ leads, onExport, onLeadsUpdate, _executeTool }: R
 
   const filteredLeads = useMemo(() => {
     let result = leads;
+    if (departmentFilter !== 'all') {
+      result = result.filter(lead => leadEmails(lead).some(c => c.department === departmentFilter));
+    }
     if (filterText) {
       const search = filterText.toLowerCase();
       result = result.filter(lead =>
@@ -120,7 +132,7 @@ export function ResultsTable({ leads, onExport, onLeadsUpdate, _executeTool }: R
       });
     }
     return result;
-  }, [leads, filterText, sortConfig]);
+  }, [leads, filterText, departmentFilter, sortConfig]);
 
   const handleSort = (key: keyof Lead) => {
     setSortConfig(current => ({
@@ -159,29 +171,29 @@ export function ResultsTable({ leads, onExport, onLeadsUpdate, _executeTool }: R
     onExport(format);
   };
 
-  const handleEnrichAll = useCallback(async () => {
-    const leadsToEnrich = leads.filter(l => l.website && l.enrichment_status !== 'completed');
-    if (leadsToEnrich.length === 0) return;
+  const runEnrichment = useCallback(async (targets: Lead[]) => {
+    if (targets.length === 0) return;
 
-    setEnrichmentProgress({ current: 0, total: leadsToEnrich.length });
-    setEnriching(new Set(leadsToEnrich.map(l => l.id)));
+    setEnrichmentProgress({ current: 0, total: targets.length });
+    setEnriching(new Set(targets.map(l => l.id)));
 
     try {
-      const enriched = await enrichLeads(leads);
-      onLeadsUpdate(enriched);
+      const enriched = await enrichLeads(targets, executeTool);
+      const byId = new Map(enriched.map(l => [l.id, l] as const));
+      onLeadsUpdate(leads.map(l => byId.get(l.id) ?? l));
     } catch (err) {
       console.error('Enrichment failed:', err);
-      const failedLeads = leads.map(lead => 
-        leadsToEnrich.some(l => l.id === lead.id)
-          ? { ...lead, enrichment_status: 'failed' as const }
-          : lead
-      );
-      onLeadsUpdate(failedLeads);
+      const failedIds = new Set(targets.map(l => l.id));
+      onLeadsUpdate(leads.map(l => failedIds.has(l.id) ? { ...l, enrichment_status: 'failed' as const } : l));
     } finally {
       setEnriching(new Set());
       setEnrichmentProgress(null);
     }
-  }, [leads, onLeadsUpdate]);
+  }, [leads, executeTool, onLeadsUpdate]);
+
+  const handleEnrichAll = useCallback(() => {
+    runEnrichment(leads.filter(l => l.website && l.enrichment_status !== 'completed'));
+  }, [leads, runEnrichment]);
 
   const handleScoreAll = useCallback(async () => {
     const icpConfig = await invoke<string | null>('get_icp_config');
@@ -203,7 +215,7 @@ export function ResultsTable({ leads, onExport, onLeadsUpdate, _executeTool }: R
     setScoring(new Set(leadsToScore.map(l => l.id)));
 
     try {
-      const scored = await scoreLeads(leads, icpConfig, llmApiKey || '', llmProvider as 'anthropic' | 'openai');
+      const scored = await scoreLeads(leads, icpConfig, llmApiKey || '', llmProvider as 'anthropic' | 'openai', await loadLlmModel());
       onLeadsUpdate(scored);
     } catch (err) {
       console.error('Scoring failed:', err);
@@ -226,15 +238,17 @@ export function ResultsTable({ leads, onExport, onLeadsUpdate, _executeTool }: R
     setOutreachDraft(null);
 
     try {
-      const draft = await generateOutreachDraft(lead, llmApiKey || '', llmProvider as 'anthropic' | 'openai');
+      const draft = await generateOutreachDraft(lead, llmApiKey || '', llmProvider as 'anthropic' | 'openai', await loadLlmModel());
       setOutreachDraft(draft);
+      onLeadsUpdate(leads.map(l => (l.id === lead.id ? { ...l, outreach_draft: draft } : l)));
     } catch (err) {
       console.error('Outreach draft failed:', err);
-      alert('Failed to generate outreach draft. Check console for details.');
+      const reason = err instanceof Error ? err.message : String(err);
+      alert(`Failed to generate outreach draft: ${reason}`);
     } finally {
       setDraftLoading(false);
     }
-  }, []);
+  }, [leads, onLeadsUpdate]);
 
   const closeDraftPanel = useCallback(() => {
     setDraftingLead(null);
@@ -268,6 +282,17 @@ export function ResultsTable({ leads, onExport, onLeadsUpdate, _executeTool }: R
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
+
+          <select
+            className="input w-44"
+            aria-label="Filter by department"
+            value={departmentFilter}
+            onChange={(e) => setDepartmentFilter(e.target.value as 'all' | 'marketing' | 'hr')}
+          >
+            <option value="all">All departments</option>
+            <option value="marketing">Marketing only</option>
+            <option value="hr">HR / Jobs only</option>
+          </select>
           
           <div className="relative group">
             <button className="btn-secondary">Columns</button>
@@ -410,7 +435,7 @@ export function ResultsTable({ leads, onExport, onLeadsUpdate, _executeTool }: R
                       {lead.website && lead.enrichment_status !== 'completed' && !enriching.has(lead.id) && (
                         <button
                           className="btn-secondary text-xs py-1 px-2"
-                          onClick={() => handleEnrichAll()} // For now, enrich all
+                          onClick={() => runEnrichment([lead])}
                           disabled={enriching.size > 0}
                           title="Enrich this lead"
                         >

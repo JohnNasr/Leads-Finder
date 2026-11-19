@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { AppUpdate } from './AppUpdate';
+import { ANTHROPIC_MODELS, DEFAULT_ANTHROPIC_MODEL, LLM_MODEL_KEY } from '../services/llm';
 
 interface SettingsProps {
   onTokenSaved: () => void;
@@ -25,6 +26,7 @@ export function Settings({ onTokenSaved, isConnected }: SettingsProps) {
   const [llmSaved, setLlmSaved] = useState(false);
   const [llmSaving, setLlmSaving] = useState(false);
   const [showLlmToken, setShowLlmToken] = useState(false);
+  const [llmModel, setLlmModel] = useState(DEFAULT_ANTHROPIC_MODEL);
 
   // ICP settings
   const [icpConfig, setIcpConfig] = useState('');
@@ -51,11 +53,13 @@ export function Settings({ onTokenSaved, isConnected }: SettingsProps) {
 
   const loadLlmSettings = async () => {
     try {
-      const [provider, key] = await Promise.all([
+      const [provider, key, model] = await Promise.all([
         invoke<string | null>('get_llm_provider'),
         invoke<string | null>('get_llm_api_key'),
+        invoke<string | null>('get_store_value', { key: LLM_MODEL_KEY }),
       ]);
       if (provider) setLlmProvider(provider as 'anthropic' | 'openai' | 'local');
+      if (model) setLlmModel(model);
       if (key) {
         setLlmApiKey(key);
         setLlmSaved(true);
@@ -118,6 +122,15 @@ export function Settings({ onTokenSaved, isConnected }: SettingsProps) {
       console.error('Failed to save LLM settings:', err);
     } finally {
       setLlmSaving(false);
+    }
+  };
+
+  const handleModelChange = async (model: string) => {
+    setLlmModel(model);
+    try {
+      await invoke('set_store_value', { key: LLM_MODEL_KEY, value: model });
+    } catch (err) {
+      console.error('Failed to save model:', err);
     }
   };
 
@@ -288,6 +301,23 @@ export function Settings({ onTokenSaved, isConnected }: SettingsProps) {
             )}
           </div>
         </div>
+
+        {llmProvider === 'anthropic' && (
+          <div className="mb-4">
+            <label className="label" htmlFor="llm-model">Model</label>
+            <select
+              id="llm-model"
+              className="input"
+              value={llmModel}
+              onChange={(e) => handleModelChange(e.target.value)}
+            >
+              {ANTHROPIC_MODELS.map(m => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500 mt-1">Used for outreach drafts and ICP scoring.</p>
+          </div>
+        )}
 
         <div className="flex gap-3">
           <button

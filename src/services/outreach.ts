@@ -1,5 +1,5 @@
-import { Anthropic } from '@anthropic-ai/sdk';
 import type { Lead, OutreachDraft } from '../types';
+import { anthropicClient, DEFAULT_ANTHROPIC_MODEL, fillTemplate, parseJsonReply, replyText } from './llm';
 
 const OUTREACH_PROMPT = `You are a B2B sales assistant. Given a lead with the following information:
 - Name: {name}
@@ -27,44 +27,48 @@ Return ONLY valid JSON with this exact structure:
 export async function generateOutreachDraft(
   lead: Lead,
   apiKey: string,
-  provider: 'anthropic' | 'openai' = 'anthropic'
+  provider: 'anthropic' | 'openai' = 'anthropic',
+  model = DEFAULT_ANTHROPIC_MODEL,
 ): Promise<OutreachDraft> {
   if (provider === 'anthropic') {
-    return generateWithAnthropic(lead, apiKey);
+    return generateWithAnthropic(lead, apiKey, model);
   }
   throw new Error(`Provider ${provider} not yet implemented`);
 }
 
-async function generateWithAnthropic(lead: Lead, apiKey: string): Promise<OutreachDraft> {
-  const client = new Anthropic({ apiKey });
-  
-  const prompt = OUTREACH_PROMPT
-    .replace('{name}', lead.name)
-    .replace('{website}', lead.website || 'N/A')
-    .replace('{description}', lead.description || 'N/A')
-    .replace('{location}', lead.location)
-    .replace('{type}', lead.type)
-    .replace('{linkedin}', lead.linkedin || 'N/A')
-    .replace('{twitter}', lead.twitter || 'N/A');
+async function generateWithAnthropic(lead: Lead, apiKey: string, model: string): Promise<OutreachDraft> {
+  const client = anthropicClient(apiKey);
+
+  const prompt = fillTemplate(OUTREACH_PROMPT, {
+    name: lead.name,
+    website: lead.website || 'N/A',
+    description: lead.description || 'N/A',
+    location: lead.location,
+    type: lead.type,
+    linkedin: lead.linkedin || 'N/A',
+    twitter: lead.twitter || 'N/A',
+  });
 
   const response = await client.messages.create({
-    model: 'claude-3-5-haiku-20241022',
-    max_tokens: 1024,
+    model,
+    max_tokens: 4096,
     system: 'You are a B2B sales assistant. Always return valid JSON only.',
     messages: [{ role: 'user', content: prompt }],
   });
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  
+  const text = replyText(response.content);
+
+  let draft: OutreachDraft;
   try {
-    const draft = JSON.parse(text) as OutreachDraft;
-    // Validate required fields
-    if (!draft.icebreaker || !draft.subject || !draft.hook || !draft.talking_points) {
-      throw new Error('Missing required fields in response');
-    }
-    return draft;
+    draft = parseJsonReply<OutreachDraft>(text);
   } catch {
-    console.error('Failed to parse outreach draft:', text);
+    const shape = response.content.map(b => b.type).join(', ') || 'none';
+    console.error('Failed to parse outreach draft:', { stop_reason: response.stop_reason, blocks: shape, text });
+    throw new Error(`invalid response format (stop: ${response.stop_reason ?? 'unknown'}, blocks: ${shape})`);
+  }
+  if (!draft.icebreaker || !draft.subject || !draft.hook || !draft.talking_points) {
+    console.error('Outreach draft missing fields:', text);
     throw new Error('Failed to generate outreach draft: invalid response format');
   }
+  return draft;
 }
